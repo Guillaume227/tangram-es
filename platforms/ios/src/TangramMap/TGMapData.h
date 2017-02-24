@@ -17,7 +17,7 @@ typedef NSDictionary<NSString *, NSString *> FeatureProperties;
 
 NS_ASSUME_NONNULL_BEGIN
 
-- (void)addPoint:(TGGeoPoint)point withProperties:(FeatureProperties *)properties;
+- (void)addPoint:(TGGeoPoint)coordinates withProperties:(FeatureProperties *)properties;
 
 - (void)addPolygon:(TGGeoPolygon *)polygon withProperties:(FeatureProperties *)properties;
 
