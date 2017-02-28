@@ -29,6 +29,8 @@ void MarkerManager::setScene(std::shared_ptr<Scene> scene) {
 
 MarkerID MarkerManager::add() {
 
+    auto lock = getMarkerLock();
+
     // Add a new empty marker object to the list of markers.
     auto id = ++m_idCounter;
     m_markers.push_back(std::make_unique<Marker>(id));
@@ -42,6 +44,9 @@ MarkerID MarkerManager::add() {
 }
 
 bool MarkerManager::remove(MarkerID markerID) {
+
+    auto lock = getMarkerLock();
+
     for (auto it = m_markers.begin(), end = m_markers.end(); it != end; ++it) {
         if (it->get()->id() == markerID) {
             m_markers.erase(it);
@@ -52,6 +57,8 @@ bool MarkerManager::remove(MarkerID markerID) {
 }
 
 bool MarkerManager::setStyling(MarkerID markerID, const char* styling) {
+    auto lock = getMarkerLock();
+
     Marker* marker = getMarkerOrNull(markerID);
     if (!marker) { return false; }
 
@@ -65,6 +72,8 @@ bool MarkerManager::setStyling(MarkerID markerID, const char* styling) {
 }
 
 bool MarkerManager::setBitmap(MarkerID markerID, int width, int height, const unsigned int* bitmapData) {
+    auto lock = getMarkerLock();
+
     Marker* marker = getMarkerOrNull(markerID);
     if (!marker) { return false; }
 
@@ -83,6 +92,7 @@ bool MarkerManager::setBitmap(MarkerID markerID, int width, int height, const un
 }
 
 bool MarkerManager::setVisible(MarkerID markerID, bool visible) {
+    auto lock = getMarkerLock();
     Marker* marker = getMarkerOrNull(markerID);
     if (!marker) { return false; }
 
@@ -109,6 +119,7 @@ bool MarkerManager::setDrawOrder(MarkerID markerID, int drawOrder) {
 }
 
 bool MarkerManager::setPoint(MarkerID markerID, LngLat lngLat) {
+    auto lock = getMarkerLock();
 
     if (!m_scene) { return false; }
 
@@ -132,6 +143,7 @@ bool MarkerManager::setPoint(MarkerID markerID, LngLat lngLat) {
 }
 
 bool MarkerManager::setPointEased(MarkerID markerID, LngLat lngLat, float duration, EaseType ease) {
+    auto lock = getMarkerLock();
 
     if (!m_scene) { return false; }
 
@@ -150,6 +162,7 @@ bool MarkerManager::setPointEased(MarkerID markerID, LngLat lngLat, float durati
 }
 
 bool MarkerManager::setPolyline(MarkerID markerID, LngLat* coordinates, int count) {
+    auto lock = getMarkerLock();
 
     if (!m_scene) { return false; }
 
@@ -196,6 +209,7 @@ bool MarkerManager::setPolyline(MarkerID markerID, LngLat* coordinates, int coun
 }
 
 bool MarkerManager::setPolygon(MarkerID markerID, LngLat* coordinates, int* counts, int rings) {
+    auto lock = getMarkerLock();
 
     if (!m_scene) { return false; }
 
@@ -256,6 +270,7 @@ bool MarkerManager::setPolygon(MarkerID markerID, LngLat* coordinates, int* coun
 }
 
 bool MarkerManager::update(int zoom) {
+    auto lock = getMarkerLock();
 
     if (zoom == m_zoom) {
          return false;
@@ -273,12 +288,14 @@ bool MarkerManager::update(int zoom) {
 }
 
 void MarkerManager::removeAll() {
+    auto lock = getMarkerLock();
 
     m_markers.clear();
-
 }
 
 void MarkerManager::rebuildAll() {
+
+    auto lock = getMarkerLock();
 
     for (auto& entry : m_markers) {
         buildStyling(*entry);

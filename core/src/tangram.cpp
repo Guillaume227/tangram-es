@@ -364,6 +364,9 @@ bool Map::update(float _dt) {
         impl->tileManager.updateTileSets(impl->view.state(), impl->view.getVisibleTiles());
 
         auto& tiles = impl->tileManager.getVisibleTiles();
+
+        auto markerLock = impl->markerManager.getMarkerLock();
+
         auto& markers = impl->markerManager.markers();
 
         for (const auto& marker : markers) {
@@ -459,7 +462,7 @@ void Map::render() {
             for (const auto& tile : impl->tileManager.getVisibleTiles()) {
                 style->drawSelectionFrame(impl->renderState, *tile);
             }
-
+            auto mutexLock = impl->markerManager.getMarkerLock();
             for (const auto& marker : impl->markerManager.markers()) {
                 style->drawSelectionFrame(impl->renderState, *marker);
             }
@@ -492,6 +495,7 @@ void Map::render() {
 
     {
         std::lock_guard<std::mutex> lock(impl->tilesMutex);
+        auto markerLock = impl->markerManager.getMarkerLock();
 
         // Loop over all styles
         for (const auto& style : impl->scene->styles()) {
@@ -745,9 +749,10 @@ MarkerID Map::markerAdd() {
     return impl->markerManager.add();
 }
 
-bool Map::markerRemove(MarkerID _marker) {
+bool Map::markerRemove(MarkerID _marker, bool renderRequest) {
     bool success = impl->markerManager.remove(_marker);
-    platform->requestRender();
+    if(renderRequest)
+        platform->requestRender();
     return success;
 }
 
@@ -763,21 +768,24 @@ bool Map::markerSetPointEased(MarkerID _marker, LngLat _lngLat, float _duration,
     return success;
 }
 
-bool Map::markerSetPolyline(MarkerID _marker, LngLat* _coordinates, int _count) {
+bool Map::markerSetPolyline(MarkerID _marker, LngLat* _coordinates, int _count, bool renderRequest) {
     bool success = impl->markerManager.setPolyline(_marker, _coordinates, _count);
-    platform->requestRender();
+    if(renderRequest)
+        platform->requestRender();
     return success;
 }
 
-bool Map::markerSetPolygon(MarkerID _marker, LngLat* _coordinates, int* _counts, int _rings) {
+bool Map::markerSetPolygon(MarkerID _marker, LngLat* _coordinates, int* _counts, int _rings, bool renderRequest) {
     bool success = impl->markerManager.setPolygon(_marker, _coordinates, _counts, _rings);
-    platform->requestRender();
+	if(renderRequest)
+	    platform->requestRender();
     return success;
 }
 
-bool Map::markerSetStyling(MarkerID _marker, const char* _styling) {
+bool Map::markerSetStyling(MarkerID _marker, const char* _styling, bool renderRequest) {
     bool success = impl->markerManager.setStyling(_marker, _styling);
-    platform->requestRender();
+    if(renderRequest)
+        platform->requestRender();
     return success;
 }
 

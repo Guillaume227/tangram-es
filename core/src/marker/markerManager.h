@@ -68,7 +68,13 @@ public:
 
     const Marker* getMarkerOrNullBySelectionColor(uint32_t selectionColor) const;
 
+    auto getMarkerLock(){
+        return std::unique_lock<decltype(m_markerMutex)>(m_markerMutex);
+    }
+
 private:
+
+    std::recursive_mutex m_markerMutex;
 
     Marker* getMarkerOrNull(MarkerID markerID);
 
