@@ -51,7 +51,7 @@ public:
         return m_priority.load();
     }
 
-    void setPriority(double _priority) {
+    void setPriority(float _priority) {
         m_priority.store(_priority);
     }
 

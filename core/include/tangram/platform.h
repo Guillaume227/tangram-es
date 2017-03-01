@@ -29,9 +29,13 @@ void initGLExtensions();
 // Set the priority of the current thread. Priority is equivalent to pthread niceness
 void setCurrentThreadPriority(int priority);
 
+class PlatformTangramImpl;
+
 class Platform {
 
 public:
+
+	static std::shared_ptr<Platform> wrapPlatform(const std::shared_ptr<PlatformTangramImpl> & tangramPlatform);
 
     Platform();
     virtual ~Platform();

@@ -227,8 +227,8 @@ struct add_geometry {
         }
         return true;
     }
-
-    bool operator()(const geometry::geometry<int16_t>& geom) {
+    template<typename T>
+    bool operator()(T) {
         // Unreachable: All multi-geometries are split up in vector tiles.
         return false;
     }

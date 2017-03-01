@@ -206,12 +206,12 @@ public:
 
     // Remove a marker object from the map; returns true if the marker ID was found and successfully
     // removed, otherwise returns false.
-    bool markerRemove(MarkerID _marker);
+    bool markerRemove(MarkerID _marker, bool renderRequest = true);
 
     // Set the styling for a marker object; _styling is a string of YAML that specifies a 'draw rule'
     // according to the scene file syntax; returns true if the marker ID was found and successfully
     // updated, otherwise returns false.
-    bool markerSetStyling(MarkerID _marker, const char* _styling);
+    bool markerSetStyling(MarkerID _marker, const char* _styling, bool renderRequest=true);
 
     // Set a bitmap to use as the image for a point marker; _data is a buffer of RGBA pixel data with
     // length of _width * _height; pixels are in row-major order beginning from the bottom-left of the
@@ -232,7 +232,7 @@ public:
     // pointer to a sequence of _count LngLats; markers can have their geometry set multiple times
     // with possibly different geometry types; returns true if the marker ID was found and
     // successfully updated, otherwise returns false.
-    bool markerSetPolyline(MarkerID _marker, LngLat* _coordinates, int _count);
+    bool markerSetPolyline(MarkerID _marker, LngLat* _coordinates, int _count, bool renderRequest=true);
 
     // Set the geometry of a marker to a polygon with the given coordinates; _counts is a pointer
     // to a sequence of _rings integers and _coordinates is a pointer to a sequence of LngLats with
@@ -241,7 +241,7 @@ public:
     // behaving according to the GeoJSON specification; markers can have their geometry set multiple
     // times with possibly different geometry types; returns true if the marker ID was found and
     // successfully updated, otherwise returns false.
-    bool markerSetPolygon(MarkerID _marker, LngLat* _coordinates, int* _counts, int _rings);
+    bool markerSetPolygon(MarkerID _marker, LngLat* _coordinates, int* _counts, int _rings, bool renderRequest=true);
 
     // Set the visibility of a marker object; returns true if the marker ID was found and successfully
     // updated, otherwise returns false.
