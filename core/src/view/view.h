@@ -31,6 +31,7 @@ struct ViewState {
     float tileSize;
 };
 
+struct MapPositionConstraint;
 /* View
  * 1. Stores a representation of the current view into the map world
  * 2. Determines which tiles are visible in the current view
@@ -102,6 +103,8 @@ public:
     void setPosition(double _x, double _y);
     void setPosition(const glm::dvec3 pos) { setPosition(pos.x, pos.y); }
     void setPosition(const glm::dvec2 pos) { setPosition(pos.x, pos.y); }
+
+    void setMapPositionConstraint(MapPositionConstraint* constraint);
 
     /* Sets the zoom level of the view */
     void setZoom(float _z);
@@ -210,6 +213,7 @@ protected:
     std::set<TileID> m_visibleTiles;
 
     ViewConstraint m_constraint;
+    MapPositionConstraint* m_posConstraint;
 
     glm::dvec3 m_pos;
     glm::vec3 m_eye;

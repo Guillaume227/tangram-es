@@ -20,6 +20,13 @@ enum LabelType {
     text,
 };
 
+
+struct MapPositionConstraint
+{
+	// (x, y) : units are meters, not (lon, lat) in degrees.
+    virtual void constrainPosition(double& x, double& y) = 0;
+};
+
 struct FeaturePickResult {
     FeaturePickResult(std::shared_ptr<Properties> _properties,
                       std::array<float, 2> _position)
@@ -70,7 +77,6 @@ enum class EaseType : char {
     quint,
     sine,
 };
-
 
 class Map {
 
@@ -141,9 +147,14 @@ public:
     void setPosition(double _lon, double _lat);
     void setPositionEased(double _lon, double _lat, float _duration, EaseType _e = EaseType::quint);
 
+    void setMapPositionConstraint(MapPositionConstraint* constraint);
+
     // Set the values of the arguments to the position of the map view in degrees
     // longitude and latitude
     void getPosition(double& _lon, double& _lat);
+
+    void lonLatToMeters(double& x, double& y) const;
+    void metersToLonLat(double& x, double& y) const;
 
     // Set the fractional zoom level of the view; if duration (in seconds) is provided,
     // zoom eases to the set value over the duration; calling either version of the setter

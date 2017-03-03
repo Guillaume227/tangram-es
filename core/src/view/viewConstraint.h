@@ -25,5 +25,4 @@ private:
     double m_radius = 0.0;
 
 };
-
 }

@@ -55,6 +55,8 @@ public:
     void clearEase(EaseField _f);
 
     void setPositionNow(double _lon, double _lat);
+    void setMapPositionConstraint(MapPositionConstraint * constraint);
+
     void setZoomNow(float _z);
     void setRotationNow(float _radians);
     void setTiltNow(float _radians);
@@ -552,6 +554,16 @@ void Map::setPosition(double _lon, double _lat) {
 
 }
 
+void Map::setMapPositionConstraint(MapPositionConstraint* constraint)
+{
+    impl->setMapPositionConstraint(constraint);
+}
+
+void Map::Impl::setMapPositionConstraint(MapPositionConstraint* constraint)
+{
+    view.setMapPositionConstraint(constraint);
+}
+
 void Map::setPositionEased(double _lon, double _lat, float _duration, EaseType _e) {
 
     double lon_start, lat_start;
@@ -569,6 +581,23 @@ void Map::getPosition(double& _lon, double& _lat) {
     _lat = degrees.y;
 
 }
+
+void Map::lonLatToMeters(double& x, double& y) const
+{
+    glm::dvec2 meters(x, y);
+    glm::dvec2 degrees = impl->view.getMapProjection().LonLatToMeters(meters);
+    x = degrees.x;
+    y = degrees.y;
+}
+
+void Map::metersToLonLat(double& x, double& y) const
+{
+    glm::dvec2 degrees(x, y);
+    glm::dvec2 meters = impl->view.getMapProjection().MetersToLonLat(degrees);
+    x = meters.x;
+    y = meters.y;
+}
+
 
 void Map::Impl::setZoomNow(float _z) {
 
