@@ -104,7 +104,7 @@ public:
     void setPosition(const glm::dvec3 pos) { setPosition(pos.x, pos.y); }
     void setPosition(const glm::dvec2 pos) { setPosition(pos.x, pos.y); }
 
-    void setMapPositionConstraint(MapPositionConstraint* constraint);
+    void setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint);
 
     /* Sets the zoom level of the view */
     void setZoom(float _z);
@@ -213,7 +213,7 @@ protected:
     std::set<TileID> m_visibleTiles;
 
     ViewConstraint m_constraint;
-    MapPositionConstraint* m_posConstraint;
+    std::weak_ptr<MapPositionConstraint> m_posConstraint;
 
     glm::dvec3 m_pos;
     glm::vec3 m_eye;

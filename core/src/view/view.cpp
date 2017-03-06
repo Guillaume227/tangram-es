@@ -167,7 +167,7 @@ float View::getMaxPitch() const {
 
 }
 
-void View::setMapPositionConstraint(MapPositionConstraint* constraint)
+void View::setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint)
 {
     m_posConstraint = constraint;
 }
@@ -175,8 +175,9 @@ void View::setMapPositionConstraint(MapPositionConstraint* constraint)
 
 void View::setPosition(double _x, double _y) {
 
-    if(m_posConstraint){
-        m_posConstraint->constrainPosition(_x, _y);
+    auto posConstraint = m_posConstraint.lock();
+    if(posConstraint){
+        posConstraint->constrainPosition(_x, _y);
     }
 
     m_pos.x = _x;
