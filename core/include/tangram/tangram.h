@@ -147,7 +147,7 @@ public:
     void setPosition(double _lon, double _lat);
     void setPositionEased(double _lon, double _lat, float _duration, EaseType _e = EaseType::quint);
 
-    void setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint);
+    void setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint = std::weak_ptr<MapPositionConstraint>());
 
     // Set the values of the arguments to the position of the map view in degrees
     // longitude and latitude
