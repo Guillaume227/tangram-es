@@ -156,6 +156,9 @@ public:
     void lonLatToMeters(double& x, double& y) const;
     void metersToLonLat(double& x, double& y) const;
 
+    void pixelsToMeters(double& x, double& y) const;
+    void metersToPixels(double& x, double& y) const;
+
     // Set the fractional zoom level of the view; if duration (in seconds) is provided,
     // zoom eases to the set value over the duration; calling either version of the setter
     // overrides all previous calls
@@ -163,7 +166,7 @@ public:
     void setZoomEased(float _z, float _duration, EaseType _e = EaseType::quint);
 
     // Get the fractional zoom level of the view
-    float getZoom();
+    float getZoom() const;
 
     // Set the counter-clockwise rotation of the view in radians; 0 corresponds to
     // North pointing up; if duration (in seconds) is provided, rotation eases to the

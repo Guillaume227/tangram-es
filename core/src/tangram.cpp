@@ -598,6 +598,21 @@ void Map::metersToLonLat(double& x, double& y) const
     y = meters.y;
 }
 
+void Map::pixelsToMeters(double &x, double &y) const
+{
+    glm::dvec2 pixels(x, y);
+    glm::dvec2 meters = impl->view.getMapProjection().PixelsToMeters(pixels, static_cast<int>(getZoom()));
+    x = meters.x;
+    y = meters.y;
+}
+
+void Map::metersToPixels(double &x, double &y) const
+{
+    glm::dvec2 meters(x, y);
+    glm::dvec2 pixels = impl->view.getMapProjection().MetersToPixel(meters, getZoom());
+    x = pixels.x;
+    y = pixels.y;
+}
 
 void Map::Impl::setZoomNow(float _z) {
 
@@ -622,7 +637,7 @@ void Map::setZoomEased(float _z, float _duration, EaseType _e) {
 
 }
 
-float Map::getZoom() {
+float Map::getZoom() const {
 
     return impl->view.getZoom();
 
