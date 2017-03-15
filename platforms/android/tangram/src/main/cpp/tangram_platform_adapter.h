@@ -9,21 +9,21 @@ std::string resolveScenePath(const char* path);
 
 class PlatformTangramImpl;
 
-class TangramPlatformAdapter : public Platform {
+class TangramPlatformAdapter : public Tangram::Platform {
 
-	std::shared_ptr<::PlatformTangramImpl> const platformImpl_;
+	std::shared_ptr<PlatformTangramImpl> const platformImpl_;
     AAssetManager* assetManager = nullptr; // todo: NAO fork does not set the assetManager
 
 public:
 
-    TangramPlatformAdapter(std::shared_ptr<::PlatformTangramImpl> const& tangramPlatform);
+    TangramPlatformAdapter(std::shared_ptr<PlatformTangramImpl> const& tangramPlatform);
     
     void requestRender() const override;
     std::vector<char> bytesFromFile(const char* _path) const override;
     void setContinuousRendering(bool _isContinuous) override;
     std::vector<char> systemFont(const std::string& _name, const std::string& _weight, const std::string& _face) const override;
-    std::vector<FontSourceHandle> systemFontFallbacksHandle() const override;
-    bool startUrlRequest(const std::string& _url, UrlCallback _callback) override;
+    std::vector<Tangram::FontSourceHandle> systemFontFallbacksHandle() const override;
+    bool startUrlRequest(const std::string& _url, Tangram::UrlCallback _callback) override;
     void cancelUrlRequest(const std::string& _url) override;
 
 private:

@@ -83,6 +83,10 @@ std::unique_ptr<StyledMesh> PointStyleBuilder::build() {
 void PointStyleBuilder::setup(const Tile& _tile) {
     m_zoom = _tile.getID().z;
     m_styleZoom = _tile.getID().s;
+
+    // < 1.0 when overzooming a tile
+    m_tileScale = pow(2, _tile.getID().s - _tile.getID().z);
+
     m_spriteLabels = std::make_unique<SpriteLabels>(m_style);
 
     m_textStyleBuilder->setup(_tile);
@@ -119,6 +123,7 @@ auto PointStyleBuilder::applyRule(const DrawRule& _rule, const Properties& _prop
     _rule.get(StyleParamKey::color, p.color);
     _rule.get(StyleParamKey::sprite, p.sprite);
     _rule.get(StyleParamKey::offset, p.labelOptions.offset);
+    _rule.get(StyleParamKey::buffer, p.labelOptions.buffer);
 
     uint32_t priority;
     size_t repeatGroupHash = 0;
@@ -318,8 +323,9 @@ void PointStyleBuilder::labelPointsPlacing(const Line& _line, const glm::vec4& u
         return RAD_TO_DEG * atan2(q[0] - p[0], q[1] - p[1]);
     };
 
-    float minLineLength = std::max(params.size.x, params.size.y) * params.placementMinLengthRatio *
-                            m_style.pixelScale() / View::s_pixelsPerTile;
+    float minLineLength = std::max(params.size.x, params.size.y) *
+        params.placementMinLengthRatio * m_style.pixelScale() /
+        (View::s_pixelsPerTile * m_tileScale);
 
     switch(params.placement) {
         case LabelProperty::Placement::vertex: {
@@ -357,26 +363,31 @@ void PointStyleBuilder::labelPointsPlacing(const Line& _line, const glm::vec4& u
             LineSampler<std::vector<Point>> sampler;
 
             sampler.set(_line);
-            sampler.setMinSampleLength(minLineLength);
 
             float lineLength = sampler.sumLength();
-
             if (lineLength <= minLineLength) { break; }
 
-            float spacing = params.placementSpacing * m_style.pixelScale() / View::s_pixelsPerTile;
+            float spacing = params.placementSpacing * m_style.pixelScale() /
+                (View::s_pixelsPerTile * m_tileScale);
+
             int numLabels = std::max(std::floor(lineLength / spacing), 1.0f);
             float remainderLength = lineLength - (numLabels - 1) * spacing;
             float distance = 0.5 * remainderLength;
-
             glm::vec2 p, r;
             sampler.advance(distance, p, r);
             do {
+
+                if (sampler.lengthToPrevSegment() < minLineLength*0.5 ||
+                    sampler.lengthToNextSegment() < minLineLength*0.5) {
+                    continue;
+                }
                 if (params.autoAngle) {
                     params.labelOptions.angle = RAD_TO_DEG * atan2(r.x, r.y);
                 }
+
                 addLabel({p.x, p.y, 0.f}, uvsQuad, params, _rule);
 
-            } while(sampler.advance(spacing, p, r));
+            } while (sampler.advance(spacing, p, r));
         }
         break;
         case LabelProperty::Placement::centroid:

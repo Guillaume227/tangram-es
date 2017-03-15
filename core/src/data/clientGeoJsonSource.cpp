@@ -227,12 +227,13 @@ struct add_geometry {
         }
         return true;
     }
-    template<typename T>
+
+    template <typename T>
     bool operator()(T) {
-        // Unreachable: All multi-geometries are split up in vector tiles.
+        // Unreachable: All multi-geometries and feature collections
+        // are split up in vector tiles.
         return false;
     }
-
 };
 
 std::shared_ptr<TileData> ClientGeoJsonSource::parse(const TileTask& _task,

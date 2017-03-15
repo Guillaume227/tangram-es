@@ -30,53 +30,57 @@ PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOESEXT = 0;
 static const char* aaPrefix = "asset:///";
 static const size_t aaPrefixLen = 9;
 
-void logMsg(const char* fmt, ...) {
+namespace Tangram {
 
-    va_list args;
-    va_start(args, fmt);
-    __android_log_vprint(ANDROID_LOG_DEBUG, "Tangram", fmt, args);
-    va_end(args);
-}
+    void Tangram::logMsg(const char *fmt, ...) {
 
-
-std::string resolveScenePath(const char* path) {
-    // If the path is an absolute URL (like a file:// or http:// URL)
-    // then resolving it will return the same URL. Otherwise, we resolve
-    // it against the "asset" scheme to know later that this path is in
-    // the asset bundle.
-    return Tangram::Url(path).resolved("asset:///").string();
-}
-
-void setCurrentThreadPriority(int priority) {
-    int  tid = gettid();
-    setpriority(PRIO_PROCESS, tid, priority);
-}
-
-
-void initGLExtensions() {
-	
-	static bool glExtensionsLoaded = false;
-
-    if (glExtensionsLoaded) {
-        return;
+        va_list args;
+        va_start(args, fmt);
+        __android_log_vprint(ANDROID_LOG_DEBUG, "Tangram", fmt, args);
+        va_end(args);
     }
 
-    void* libhandle = dlopen("libGLESv2.so", RTLD_LAZY);
+    std::string resolveScenePath(const char *path) {
+        // If the path is an absolute URL (like a file:// or http:// URL)
+        // then resolving it will return the same URL. Otherwise, we resolve
+        // it against the "asset" scheme to know later that this path is in
+        // the asset bundle.
+        return Tangram::Url(path).resolved("asset:///").string();
+    }
 
-    glBindVertexArrayOESEXT = (PFNGLBINDVERTEXARRAYOESPROC) dlsym(libhandle, "glBindVertexArrayOES");
-    glDeleteVertexArraysOESEXT = (PFNGLDELETEVERTEXARRAYSOESPROC) dlsym(libhandle, "glDeleteVertexArraysOES");
-    glGenVertexArraysOESEXT = (PFNGLGENVERTEXARRAYSOESPROC) dlsym(libhandle, "glGenVertexArraysOES");
+    void setCurrentThreadPriority(int priority) {
+        int tid = gettid();
+        setpriority(PRIO_PROCESS, tid, priority);
+    }
 
-    glExtensionsLoaded = true;
+
+    void initGLExtensions() {
+
+        static bool glExtensionsLoaded = false;
+
+        if (glExtensionsLoaded) {
+            return;
+        }
+
+        void *libhandle = dlopen("libGLESv2.so", RTLD_LAZY);
+
+        glBindVertexArrayOESEXT = (PFNGLBINDVERTEXARRAYOESPROC) dlsym(libhandle,
+                                                                      "glBindVertexArrayOES");
+        glDeleteVertexArraysOESEXT = (PFNGLDELETEVERTEXARRAYSOESPROC) dlsym(libhandle,
+                                                                            "glDeleteVertexArraysOES");
+        glGenVertexArraysOESEXT = (PFNGLGENVERTEXARRAYSOESPROC) dlsym(libhandle,
+                                                                      "glGenVertexArraysOES");
+
+        glExtensionsLoaded = true;
+    }
+
+    std::shared_ptr<Platform>
+    Platform::wrapPlatform(const std::shared_ptr<PlatformTangramImpl> &tangramPlatform) {
+        return std::make_shared<TangramPlatformAdapter>(tangramPlatform);
+    }
+
 }
-
-std::shared_ptr<Platform> Platform::wrapPlatform(const std::shared_ptr<::PlatformTangramImpl> & tangramPlatform)
-{
-	return std::make_shared<TangramPlatformAdapter>(tangramPlatform);
-}
-
-
-TangramPlatformAdapter::TangramPlatformAdapter(std::shared_ptr<::PlatformTangramImpl> const& tangramPlatform) 
+TangramPlatformAdapter::TangramPlatformAdapter(std::shared_ptr<PlatformTangramImpl> const& tangramPlatform)
 : platformImpl_(tangramPlatform){}
 
 void TangramPlatformAdapter::requestRender() const
@@ -117,7 +121,7 @@ std::vector<char> TangramPlatformAdapter::systemFont(const std::string& _name, c
 
     return data;
 }
-
+using namespace Tangram;
 std::vector<FontSourceHandle> TangramPlatformAdapter::systemFontFallbacksHandle() const
 {
 	

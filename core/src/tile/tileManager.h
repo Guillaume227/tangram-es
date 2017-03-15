@@ -53,7 +53,9 @@ public:
 
     bool hasTileSetChanged() { return m_tileSetChanged; }
 
-    bool hasLoadingTiles() { return m_tilesInProgress > 0; }
+    bool hasLoadingTiles() {
+        return m_tilesInProgress > 0;
+    }
 
     void addClientTileSource(std::shared_ptr<TileSource> _source);
 
@@ -97,7 +99,7 @@ private:
         uint8_t m_proxies = 0;
 
         bool isReady() { return bool(tile); }
-        bool isLoading() { return bool(task) && !task->isCanceled(); }
+        bool isInProgress() { return bool(task) && !task->isCanceled(); }
 
         bool needsLoading() {
             //return !bool(task) || (task->needsLoading() && !task->isCanceled());

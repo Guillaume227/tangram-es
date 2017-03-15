@@ -16,12 +16,16 @@ add_library(${LIB_NAME} SHARED
   
   #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/jniExports.cpp
   #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/platform_android.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/sqlite3ndk.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/tangram_platform_adapter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/djinni_main.cpp
   
   ${NAO_MAP_DIR}src/main/jni/NativePlatformTangramImpl.cpp
   ${NAO_MAP_DIR}src/main/jni/NativeIUrlCallback.cpp
   )
+
+target_include_directories(${LIB_NAME} PUBLIC
+  ${CMAKE_SOURCE_DIR}/core/deps/SQLiteCpp/sqlite3) # sqlite3ndk.cpp needs sqlite3.h
 
  
 target_include_directories(${LIB_NAME} PRIVATE 

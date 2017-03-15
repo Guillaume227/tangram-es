@@ -1,9 +1,10 @@
 #include "platform.h"
+#include "log.h"
 
 #include <fstream>
 #include <string>
 
-#include "log.h"
+namespace Tangram {
 
 Platform::Platform() : m_continuousRendering(false) {}
 
@@ -16,6 +17,10 @@ void Platform::setContinuousRendering(bool _isContinuous) {
 bool Platform::isContinuousRendering() const {
     return m_continuousRendering;
 }
+
+std::string Platform::resolveAssetPath(const std::string& path) const {
+    return path;
+};
 
 bool Platform::bytesFromFileSystem(const char* _path, std::function<char*(size_t)> _allocator) const {
     std::ifstream resource(_path, std::ifstream::ate | std::ifstream::binary);
@@ -76,3 +81,4 @@ std::vector<FontSourceHandle> Platform::systemFontFallbacksHandle() const {
     return {};
 }
 
+} // namespace Tangram

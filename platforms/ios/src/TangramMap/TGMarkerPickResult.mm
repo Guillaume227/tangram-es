@@ -7,23 +7,24 @@
 //
 
 #import "TGMarkerPickResult.h"
+#import "TGMarkerPickResult+Internal.h"
 
 @interface TGMarkerPickResult ()
 
 @property (assign, nonatomic) TGGeoPoint coordinates;
-@property (assign, nonatomic) TGMapMarkerId identifier;
+@property (strong, nonatomic) TGMarker* marker;
 
 @end
 
 @implementation TGMarkerPickResult
 
-- (instancetype) initWithCoordinates:(TGGeoPoint)coordinates identifier:(TGMapMarkerId)identifier
+- (instancetype) initWithCoordinates:(TGGeoPoint)coordinates marker:(TGMarker *)marker
 {
     self = [super init];
 
     if (self) {
         self.coordinates = coordinates;
-        self.identifier = identifier;
+        self.marker = marker;
     }
 
     return self;

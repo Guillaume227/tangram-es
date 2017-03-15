@@ -14,20 +14,7 @@
 #import "platform_ios.h"
 #import "log.h"
 
-void logMsg(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-}
-
-void setCurrentThreadPriority(int priority) {
-    // No-op
-}
-
-void initGLExtensions() {
-    // No-op
-}
+namespace Tangram {
 
 NSString* resolvePath(const char* _path) {
     NSString* pathString = [NSString stringWithUTF8String:_path];
@@ -72,6 +59,21 @@ std::vector<char> loadUIFont(UIFont* _font) {
     return data;
 }
 
+void logMsg(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+}
+
+void setCurrentThreadPriority(int priority) {
+    // No-op
+}
+
+void initGLExtensions() {
+    // No-op
+}
+
 iOSPlatform::iOSPlatform(TGMapViewController* _viewController) :
     Platform(),
     m_viewController(_viewController) {}
@@ -83,6 +85,11 @@ void iOSPlatform::requestRender() const {
 void iOSPlatform::setContinuousRendering(bool _isContinuous) {
     Platform::setContinuousRendering(_isContinuous);
     [m_viewController setContinuous:_isContinuous];
+}
+
+std::string iOSPlatform::resolveAssetPath(const std::string& _path) const {
+    NSString* path = resolvePath(_path.c_str());
+    return [path UTF8String];
 }
 
 std::vector<char> iOSPlatform::bytesFromFile(const char* _path) const {
@@ -232,5 +239,7 @@ void iOSPlatform::cancelUrlRequest(const std::string& _url) {
     NSString* url = [NSString stringWithUTF8String:_url.c_str()];
     [httpHandler cancelDownloadRequestAsync:url];
 }
+
+} // namespace Tangram
 
 #endif //PLATFORM_IOS

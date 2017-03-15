@@ -1,12 +1,12 @@
 #ifdef PLATFORM_ANDROID
 
 #include "platform_android.h"
+
 #include "data/properties.h"
 #include "data/propertyItem.h"
+#include "log.h"
 #include "util/url.h"
 #include "tangram.h"
-
-#include <GLES2/gl2platform.h>
 
 #ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES 1
@@ -14,21 +14,16 @@
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <dlfcn.h> // dlopen, dlsym
-
+#include <GLES2/gl2platform.h>
 #include <android/log.h>
 #include <android/asset_manager_jni.h>
 #include <cstdarg>
-
+#include <dlfcn.h> // dlopen, dlsym
 #include <libgen.h>
 #include <unistd.h>
 #include <sys/resource.h>
-#include <fstream>
-#include <algorithm>
 
-#include <regex>
-
-#include "log.h"
+#include "sqlite3ndk.h"
 
 /* Followed the following document for JavaVM tips when used with native threads
  * http://android.wooyd.org/JNIExample/#NWD1sCYeT-I
@@ -115,13 +110,40 @@ void setupJniEnv(JNIEnv* jniEnv) {
     onMarkerPickMID = jniEnv->GetMethodID(markerPickListenerClass, "onMarkerPick", "(Lcom/mapzen/tangram/MarkerPickResult;FF)V");
 }
 
-void logMsg(const char* fmt, ...) {
+void onUrlSuccess(JNIEnv* _jniEnv, jbyteArray _jBytes, jlong _jCallbackPtr) {
 
-    va_list args;
-    va_start(args, fmt);
-    __android_log_vprint(ANDROID_LOG_DEBUG, "Tangram", fmt, args);
-    va_end(args);
+    size_t length = _jniEnv->GetArrayLength(_jBytes);
+    std::vector<char> content;
+    content.resize(length);
 
+    _jniEnv->GetByteArrayRegion(_jBytes, 0, length, reinterpret_cast<jbyte*>(content.data()));
+
+    Tangram::UrlCallback* callback = reinterpret_cast<Tangram::UrlCallback*>(_jCallbackPtr);
+    (*callback)(std::move(content));
+    delete callback;
+}
+
+void onUrlFailure(JNIEnv* _jniEnv, jlong _jCallbackPtr) {
+    std::vector<char> empty;
+
+    Tangram::UrlCallback* callback = reinterpret_cast<Tangram::UrlCallback*>(_jCallbackPtr);
+    (*callback)(std::move(empty));
+    delete callback;
+}
+
+std::string stringFromJString(JNIEnv* jniEnv, jstring string) {
+    size_t length = jniEnv->GetStringLength(string);
+    std::string out(length, 0);
+    jniEnv->GetStringUTFRegion(string, 0, length, &out[0]);
+    return out;
+}
+
+std::string resolveScenePath(const char* path) {
+    // If the path is an absolute URL (like a file:// or http:// URL)
+    // then resolving it will return the same URL. Otherwise, we resolve
+    // it against the "asset" scheme to know later that this path is in
+    // the asset bundle.
+    return Tangram::Url(path).resolved("asset:///").string();
 }
 
 class JniThreadBinding {
@@ -147,6 +169,17 @@ public:
     }
 };
 
+namespace Tangram {
+
+void logMsg(const char* fmt, ...) {
+
+    va_list args;
+    va_start(args, fmt);
+    __android_log_vprint(ANDROID_LOG_DEBUG, "Tangram", fmt, args);
+    va_end(args);
+
+}
+
 std::string AndroidPlatform::fontPath(const std::string& _family, const std::string& _weight, const std::string& _style) const {
 
     JniThreadBinding jniEnv(jvm);
@@ -170,7 +203,10 @@ AndroidPlatform::AndroidPlatform(JNIEnv* _jniEnv, jobject _assetManager, jobject
 
     if (m_assetManager == nullptr) {
         LOGE("Could not obtain Asset Manager reference");
+        return;
     }
+
+    sqlite3_ndk_init(m_assetManager);
 }
 
 void AndroidPlatform::dispose(JNIEnv* _jniEnv) {
@@ -285,14 +321,6 @@ std::vector<char> AndroidPlatform::bytesFromFile(const char* _path) const {
     return data;
 }
 
-std::string resolveScenePath(const char* path) {
-    // If the path is an absolute URL (like a file:// or http:// URL)
-    // then resolving it will return the same URL. Otherwise, we resolve
-    // it against the "asset" scheme to know later that this path is in
-    // the asset bundle.
-    return Tangram::Url(path).resolved("asset:///").string();
-}
-
 bool AndroidPlatform::startUrlRequest(const std::string& _url, UrlCallback _callback) {
 
     JniThreadBinding jniEnv(jvm);
@@ -315,27 +343,6 @@ void AndroidPlatform::cancelUrlRequest(const std::string& _url) {
     JniThreadBinding jniEnv(jvm);
     jstring jUrl = jniEnv->NewStringUTF(_url.c_str());
     jniEnv->CallVoidMethod(m_tangramInstance, cancelUrlRequestMID, jUrl);
-}
-
-void onUrlSuccess(JNIEnv* _jniEnv, jbyteArray _jBytes, jlong _jCallbackPtr) {
-
-    size_t length = _jniEnv->GetArrayLength(_jBytes);
-    std::vector<char> content;
-    content.resize(length);
-
-    _jniEnv->GetByteArrayRegion(_jBytes, 0, length, reinterpret_cast<jbyte*>(content.data()));
-
-    UrlCallback* callback = reinterpret_cast<UrlCallback*>(_jCallbackPtr);
-    (*callback)(std::move(content));
-    delete callback;
-}
-
-void onUrlFailure(JNIEnv* _jniEnv, jlong _jCallbackPtr) {
-    std::vector<char> empty;
-
-    UrlCallback* callback = reinterpret_cast<UrlCallback*>(_jCallbackPtr);
-    (*callback)(std::move(empty));
-    delete callback;
 }
 
 void setCurrentThreadPriority(int priority) {
@@ -425,7 +432,6 @@ void featurePickCallback(jobject listener, const Tangram::FeaturePickResult* fea
     jniEnv->DeleteGlobalRef(listener);
 }
 
-
 void initGLExtensions() {
     if (glExtensionsLoaded) {
         return;
@@ -440,11 +446,6 @@ void initGLExtensions() {
     glExtensionsLoaded = true;
 }
 
-std::string stringFromJString(JNIEnv* jniEnv, jstring string) {
-    size_t length = jniEnv->GetStringLength(string);
-    std::string out(length, 0);
-    jniEnv->GetStringUTFRegion(string, 0, length, &out[0]);
-    return out;
-}
+} // namespace Tangram
 
 #endif

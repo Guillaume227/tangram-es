@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 
+class PlatformTangramImpl;
+
+namespace Tangram {
+
 // Function type for a mapReady callback
 using MapReady = std::function<void(void*)>;
 
@@ -29,7 +33,6 @@ void initGLExtensions();
 // Set the priority of the current thread. Priority is equivalent to pthread niceness
 void setCurrentThreadPriority(int priority);
 
-class PlatformTangramImpl;
 
 class Platform {
 
@@ -48,6 +51,8 @@ public:
     virtual void setContinuousRendering(bool _isContinuous);
 
     virtual bool isContinuousRendering() const;
+
+    virtual std::string resolveAssetPath(const std::string& path) const;
 
     // Read a file as a string
     // Opens the file at the _path and returns a string with its contents.
@@ -82,3 +87,4 @@ private:
 
 };
 
+} // namespace Tangram
