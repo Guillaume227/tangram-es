@@ -826,10 +826,16 @@ bool Map::markerSetPolygon(MarkerID _marker, LngLat* _coordinates, int* _counts,
     return success;
 }
 
-bool Map::markerSetStyling(MarkerID _marker, const char* _styling, bool renderRequest) {
-    bool success = impl->markerManager.setStyling(_marker, _styling);
+bool Map::markerSetStylingFromString(MarkerID _marker, const char* _styling, bool renderRequest) {
+    bool success = impl->markerManager.setStylingFromString(_marker, _styling);
     if(renderRequest)
         platform->requestRender();
+    return success;
+}
+
+bool Map::markerSetStylingFromPath(MarkerID _marker, const char* _path) {
+    bool success = impl->markerManager.setStylingFromPath(_marker, _path);
+    platform->requestRender();
     return success;
 }
 

@@ -18,9 +18,15 @@
 
 @implementation MapViewControllerDelegate
 
+- (void)mapView:(TGMapViewController *)view didCaptureScreenshot:(UIImage *)screenshot
+{
+    NSLog(@"Did capture screenshot");
+}
+
 - (void)mapViewDidCompleteLoading:(TGMapViewController *)mapView
 {
     NSLog(@"Did complete view");
+    [mapView captureScreenshot:YES];
 }
 
 - (void)mapView:(TGMapViewController *)mapView didLoadSceneAsync:(NSString *)scene
@@ -120,7 +126,7 @@
     {
         if (!vc.markerPolygon) {
             vc.markerPolygon = [[TGMarker alloc] init];
-            vc.markerPolygon.styling = @"{ style: 'polygons', color: 'blue', order: 500 }";
+            vc.markerPolygon.stylingString = @"{ style: 'polygons', color: 'blue', order: 500 }";
 
             // Add the marker to the current view
             vc.markerPolygon.map = view;
@@ -143,7 +149,7 @@
     // Add point marker
     {
         TGMarker* markerPoint = [[TGMarker alloc] initWithMapView:view];
-        markerPoint.styling = @"{ style: 'points', color: 'white', size: [25px, 25px], collide: false }";
+        markerPoint.stylingString = @"{ style: 'points', color: 'white', size: [25px, 25px], collide: false }";
         markerPoint.point = coordinates;
     }
 
@@ -177,7 +183,9 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    [super loadSceneFileAsync:@"https://tangrams.github.io/walkabout-style/walkabout-style.yaml"];
+    NSMutableArray<TGSceneUpdate *>* updates = [[NSMutableArray alloc]init];
+    [updates addObject:[[TGSceneUpdate alloc]initWithPath:@"global.sdk_mapzen_api_key" value:@"vector-tiles-tyHL4AY"]];
+    [super loadSceneFileAsync:@"https://tangrams.github.io/walkabout-style/walkabout-style.yaml" sceneUpdates:updates];
 }
 
 - (void)viewDidLoad
