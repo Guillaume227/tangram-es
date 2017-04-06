@@ -30,6 +30,7 @@
 #include "scene/styleMixer.h"
 #include "scene/styleParam.h"
 #include "util/base64.h"
+#include "util/floatFormatter.h"
 #include "util/yamlHelper.h"
 #include "view/view.h"
 
@@ -54,44 +55,74 @@ static const std::string GLOBAL_PREFIX = "global.";
 
 std::mutex SceneLoader::m_textureMutex;
 
-bool SceneLoader::loadScene(const std::shared_ptr<Platform>& _platform, std::shared_ptr<Scene> _scene, const std::vector<SceneUpdate>& _updates) {
+bool SceneLoader::loadScene(const std::shared_ptr<Platform>& _platform, std::shared_ptr<Scene> _scene,
+                            const std::vector<SceneUpdate>& _updates, SceneUpdateErrorCallback _onSceneUpdateError) {
 
     Importer sceneImporter;
 
     _scene->config() = sceneImporter.applySceneImports(_platform, _scene->path(), _scene->resourceRoot());
 
-    if (_scene->config()) {
-
-        applyUpdates(*_scene, _updates);
-
-        // Load font resources
-        _scene->fontContext()->loadFonts();
-
-        applyConfig(_platform, _scene);
-
-        return true;
+    if (!_scene->config()) {
+        return false;
     }
-    return false;
+
+    if (!applyUpdates(*_scene, _updates, _onSceneUpdateError)) {
+        LOGW("Scene updates failed when loading scene");
+    }
+
+    // Load font resources
+    _scene->fontContext()->loadFonts();
+
+    applyConfig(_platform, _scene);
+
+    return true;
 }
 
-void SceneLoader::applyUpdates(Scene& scene, const std::vector<SceneUpdate>& updates) {
+bool SceneLoader::applyUpdates(Scene& scene, const std::vector<SceneUpdate>& updates, SceneUpdateErrorCallback onSceneUpdateError) {
     auto& root = scene.config();
+
     for (const auto& update : updates) {
+        SceneUpdateError updateError;
+        bool hasError = false;
         Node value;
+
         try {
             value = YAML::Load(update.value);
         } catch (YAML::ParserException e) {
             LOGE("Parsing scene update string failed. '%s'", e.what());
+            updateError = {update, Error::scene_update_value_yaml_syntax_error};
+            hasError = true;
         }
-        if (value) {
+
+        if (!hasError && value) {
             try {
-                auto node = YamlPath(update.path).get(root);
-                node = value;
+                // Dummy node to trigger YAML exception on YAML syntax errors
+                auto parse = YAML::Load(update.path);
+                Node node = YamlPath(update.path).get(root);
+
+                if (node && node.Scalar().empty() && node != root) {
+                    updateError = {update, Error::scene_update_path_not_found};
+                    hasError = true;
+                } else {
+                    node = value;
+                }
             } catch(YAML::Exception e) {
                 LOGE("Parsing scene update string failed. %s '%s'", update.path.c_str(), e.what());
+                updateError = {update, Error::scene_update_path_yaml_syntax_error};
+                hasError = true;
             }
         }
+
+        if (hasError) {
+            if (onSceneUpdateError) {
+                onSceneUpdateError(updateError);
+            }
+
+            return false;
+        }
     }
+
+    return true;
 }
 
 void printFilters(const SceneLayer& layer, int indent){
@@ -1217,8 +1248,8 @@ void SceneLoader::loadCamera(const Node& _camera, const std::shared_ptr<Scene>& 
         if (Node vanishing = _camera["vanishing_point"]) {
             if (vanishing.IsSequence() && vanishing.size() >= 2) {
                 // Values are pixels, unit strings are ignored.
-                float x = std::stof(vanishing[0].Scalar());
-                float y = std::stof(vanishing[1].Scalar());
+                float x = ff::stof(vanishing[0].Scalar());
+                float y = ff::stof(vanishing[1].Scalar());
                 camera.vanishingPoint = { x, y };
             }
         }
@@ -1389,7 +1420,7 @@ bool SceneLoader::getFilterRangeValue(const Node& node, double& val, bool& hasPi
         auto n = strVal.find("px2");
         if (n == std::string::npos) { return false; }
         try {
-            val = std::stof(std::string(strVal, 0, n));
+            val = ff::stof(std::string(strVal, 0, n));
             hasPixelArea = true;
         } catch (std::invalid_argument) { return false; }
     }
@@ -1615,43 +1646,36 @@ bool SceneLoader::parseStyleUniforms(const std::shared_ptr<Platform>& platform, 
 
 void SceneLoader::parseTransition(Node params, const std::shared_ptr<Scene>& scene, std::string _prefix, std::vector<StyleParam>& out) {
 
-    for (const auto& prop : params) {
-        if (!prop.first) { continue; }
-        std::vector<std::string> keys;
-
-        if (prop.first.IsScalar()) {
-            keys.push_back(prop.first.as<std::string>());
-        } else if (prop.first.IsSequence()) {
-            keys = prop.first.as<std::vector<std::string>>();
+    // First iterate over the mapping of 'events', we currently recognize 'hide', 'selected', and 'show'.
+    for (const auto& event : params) {
+        if (!event.first.IsScalar() || !event.second.IsMap()) {
+            LOGW("Can't parse 'transitions' entry, expected a mapping of strings to mappings at: %s", _prefix.c_str());
+            continue;
         }
-        for (const auto& key : keys) {
-            std::string prefixedKey;
-            switch (prop.first.Type()) {
-            case YAML::NodeType::Sequence:
-                prefixedKey = _prefix + DELIMITER + key;
-                break;
-            case YAML::NodeType::Scalar:
-                prefixedKey = _prefix + DELIMITER + prop.first.as<std::string>();
-                break;
-            default:
-                LOGW("Expected a scalar or sequence value for transition");
+
+        // Add the event to our key, so it's now 'transition:event'.
+        std::string transitionEvent = _prefix + DELIMITER + event.first.Scalar();
+
+        // Iterate over the parameters in the 'event', we currently only recognize 'time'.
+        for (const auto& param : event.second) {
+            if (!param.first.IsScalar() || !param.second.IsScalar()) {
+                LOGW("Expected a mapping of strings to strings or numbers in: %s", transitionEvent.c_str());
                 continue;
-                break;
             }
-            for (auto child : prop.second) {
-                auto childKey = prefixedKey + DELIMITER + child.first.as<std::string>();
-                out.push_back(StyleParam{ childKey, child.second.as<std::string>() });
-            }
+            // Add the parameter to our key, so it's now 'transition:event:param'.
+            std::string transitionEventParam = transitionEvent + DELIMITER + param.first.Scalar();
+            // Create a style parameter from the key and value.
+            out.push_back(StyleParam{ transitionEventParam, param.second.Scalar() });
         }
     }
 }
 
-SceneLayer SceneLoader::loadSublayer(Node layer, const std::string& layerName, const std::shared_ptr<Scene>& scene) {
+SceneLayer SceneLoader::loadSublayer(const Node& layer, const std::string& layerName, const std::shared_ptr<Scene>& scene) {
 
     std::vector<SceneLayer> sublayers;
     std::vector<DrawRuleData> rules;
     Filter filter;
-    bool visible = true;
+    bool enabled = true;
 
     for (const auto& member : layer) {
 
@@ -1677,17 +1701,19 @@ SceneLayer SceneLoader::loadSublayer(Node layer, const std::string& layerName, c
                 LOGNode("Invalid 'filter' in layer '%s'", member.second, layerName.c_str());
                 return { layerName, {}, {}, {}, false };
             }
-        } else if (key == "properties") {
-            // TODO: ignored for now
         } else if (key == "visible") {
-            getBool(member.second, visible, "visible");
+            if (!layer["enabled"].IsDefined()) {
+                YAML::convert<bool>::decode(member.second, enabled);
+            }
+        } else if (key == "enabled") {
+            YAML::convert<bool>::decode(member.second, enabled);
         } else {
             // Member is a sublayer
             sublayers.push_back(loadSublayer(member.second, (layerName + DELIMITER + key), scene));
         }
     }
 
-    return { layerName, std::move(filter), rules, std::move(sublayers), visible };
+    return { layerName, std::move(filter), rules, std::move(sublayers), enabled };
 }
 
 void SceneLoader::loadLayer(const std::pair<Node, Node>& layer, const std::shared_ptr<Scene>& scene) {

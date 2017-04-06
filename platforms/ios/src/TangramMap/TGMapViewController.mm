@@ -23,6 +23,7 @@
 __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 
 @interface TGMapViewController () {
+    BOOL shouldCaptureFrame;
     BOOL captureFrameWaitForViewComplete;
     BOOL viewComplete;
 }
@@ -138,7 +139,13 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     }
 
     self.scenePath = path;
-    self.map->loadScene([path UTF8String], false, updates);
+
+    auto updateCallbackStatus = [=](auto sceneUpdateError) {
+        if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didFailSceneUpdateWithError:)]) { return; }
+        [self.mapViewDelegate mapView:self didFailSceneUpdateWithError:[TGHelpers errorFromSceneUpdateError:sceneUpdateError]];
+    };
+
+    self.map->loadScene([path UTF8String], false, updates, updateCallbackStatus);
     self.renderRequested = YES;
 }
 
@@ -148,7 +155,7 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 
     self.scenePath = path;
 
-    Tangram::MapReady onReadyCallback = [self, path](void* _userPtr) -> void {
+    Tangram::MapReady onReadyCallback = [=](void* _userPtr) -> void {
         if (self.mapViewDelegate && [self.mapViewDelegate respondsToSelector:@selector(mapView:didLoadSceneAsync:)]) {
             [self.mapViewDelegate mapView:self didLoadSceneAsync:path];
         }
@@ -164,7 +171,12 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
         }
     }
 
-    self.map->loadSceneAsync([path UTF8String], false, onReadyCallback, nullptr, updates);
+    auto updateCallbackStatus = [=](auto sceneUpdateError) {
+        if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didFailSceneUpdateWithError:)]) { return; }
+        [self.mapViewDelegate mapView:self didFailSceneUpdateWithError:[TGHelpers errorFromSceneUpdateError:sceneUpdateError]];
+    };
+
+    self.map->loadSceneAsync([path UTF8String], false, onReadyCallback, nullptr, updates, updateCallbackStatus);
 }
 
 #pragma mark Scene updates
@@ -195,7 +207,13 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 {
     if (!self.map) { return; }
 
-    self.map->applySceneUpdates();
+    auto updateCallbackError = [=](auto sceneUpdateError) {
+        if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didFailSceneUpdateWithError:)]) { return; }
+
+        [self.mapViewDelegate mapView:self didFailSceneUpdateWithError:[TGHelpers errorFromSceneUpdateError:sceneUpdateError]];
+    };
+
+    self.map->applySceneUpdates(updateCallbackError);
 }
 
 #pragma mark Longitude/Latitude - Screen position conversions
@@ -253,7 +271,7 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     screenPosition.x *= self.contentScaleFactor;
     screenPosition.y *= self.contentScaleFactor;
 
-    self.map->pickFeatureAt(screenPosition.x, screenPosition.y, [screenPosition, self](const Tangram::FeaturePickResult* featureResult) {
+    self.map->pickFeatureAt(screenPosition.x, screenPosition.y, [=](const Tangram::FeaturePickResult* featureResult) {
         if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didSelectFeature:atScreenPosition:)]) {
             return;
         }
@@ -288,7 +306,7 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     screenPosition.x *= self.contentScaleFactor;
     screenPosition.y *= self.contentScaleFactor;
 
-    self.map->pickMarkerAt(screenPosition.x, screenPosition.y, [screenPosition, self](const Tangram::MarkerPickResult* markerPickResult) {
+    self.map->pickMarkerAt(screenPosition.x, screenPosition.y, [=](const Tangram::MarkerPickResult* markerPickResult) {
         if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didSelectMarker:atScreenPosition:)]) {
             return;
         }
@@ -326,7 +344,7 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     screenPosition.x *= self.contentScaleFactor;
     screenPosition.y *= self.contentScaleFactor;
 
-    self.map->pickLabelAt(screenPosition.x, screenPosition.y, [screenPosition, self](const Tangram::LabelPickResult* labelPickResult) {
+    self.map->pickLabelAt(screenPosition.x, screenPosition.y, [=](const Tangram::LabelPickResult* labelPickResult) {
         if (!self.mapViewDelegate || ![self.mapViewDelegate respondsToSelector:@selector(mapView:didSelectLabel:atScreenPosition:)]) {
             return;
         }
@@ -731,6 +749,7 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 
     self->viewComplete = NO;
     self->captureFrameWaitForViewComplete = YES;
+    self->shouldCaptureFrame = NO;
     self.renderRequested = YES;
     self.continuous = NO;
     self.markersById = [[NSMutableDictionary alloc] init];
@@ -744,8 +763,12 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 
     GLKView* view = (GLKView *)self.view;
     view.context = self.context;
+
+    view.drawableColorFormat = GLKViewDrawableColorFormatRGBA8888;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    view.drawableMultisample = GLKViewDrawableMultisample4X;
+    view.drawableStencilFormat = GLKViewDrawableStencilFormatNone;
+    view.drawableMultisample = GLKViewDrawableMultisampleNone;
+
     self.contentScaleFactor = view.contentScaleFactor;
 
     [self setupGestureRecognizers];
@@ -764,16 +787,9 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
 {
     [super didReceiveMemoryWarning];
 
-    if ([self isViewLoaded] && ([[self view] window] == nil)) {
-        self.view = nil;
-
-        if ([EAGLContext currentContext] == self.context) {
-            [EAGLContext setCurrentContext:nil];
-        }
-        self.context = nil;
+    if (self.map) {
+        self.map->onMemoryWarning();
     }
-
-    // Dispose of any resources that can be recreated.
 }
 
 - (void)setupGL
@@ -827,9 +843,19 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     self.paused = !c;
 }
 
+- (void)setResourceRoot:(NSURL *)resourceRoot
+{
+    if (!self.map) { return; }
+
+    Tangram::iOSPlatform& platform = static_cast<Tangram::iOSPlatform&>(*self.map->getPlatform());
+
+    platform.setResourceRoot(resourceRoot);
+}
+
 - (void)captureScreenshot:(BOOL)waitForViewComplete
 {
     self->captureFrameWaitForViewComplete = waitForViewComplete;
+    self->shouldCaptureFrame = YES;
 }
 
 - (void)update
@@ -852,13 +878,15 @@ __CG_STATIC_ASSERT(sizeof(TGGeoPoint) == sizeof(Tangram::LngLat));
     self.map->render();
 
     if (self.mapViewDelegate && [self.mapViewDelegate respondsToSelector:@selector(mapView:didCaptureScreenshot:)]) {
-        if (!self->captureFrameWaitForViewComplete || self->viewComplete) {
+        if (self->shouldCaptureFrame && (!self->captureFrameWaitForViewComplete || self->viewComplete)) {
             UIGraphicsBeginImageContext(self.view.frame.size);
             [self.view drawViewHierarchyInRect:self.view.frame afterScreenUpdates:YES];
             UIImage* screenshot = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
 
             [self.mapViewDelegate mapView:self didCaptureScreenshot:screenshot];
+
+            self->shouldCaptureFrame = NO;
         }
     }
 }

@@ -115,7 +115,7 @@ bool MarkerManager::setVisible(MarkerID markerID, bool visible) {
     auto labelMesh = dynamic_cast<const LabelSet*>(marker->mesh());
     if (labelMesh) {
         for (auto& label : labelMesh->getLabels()) {
-            label->setAlpha(visible ? 1.0 : 0.0);
+            label->setForceInvisible(!visible);
         }
     }
 
@@ -295,7 +295,6 @@ bool MarkerManager::update(int zoom) {
     for (auto& marker : m_markers) {
         if (zoom != marker->builtZoomLevel()) {
             buildGeometry(*marker, zoom);
-            setVisible(marker->id(), marker->isVisible());
             rebuilt = true;
         }
     }
@@ -316,7 +315,6 @@ void MarkerManager::rebuildAll() {
     for (auto& entry : m_markers) {
         buildStyling(*entry);
         buildGeometry(*entry, m_zoom);
-        setVisible(entry->id(), entry->isVisible());
     }
 
 }
@@ -443,6 +441,8 @@ bool MarkerManager::buildGeometry(Marker& marker, int zoom) {
 
     marker.setSelectionColor(selectionColor);
     marker.setMesh(styler->style().getID(), zoom, styler->build());
+
+    setVisible(marker.id(), marker.isVisible());
 
     return true;
 }

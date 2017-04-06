@@ -66,14 +66,6 @@ void DrawRule::merge(const DrawRuleData& _ruleData, const SceneLayer& _layer) {
     }
 }
 
-bool DrawRule::isJSFunction(StyleParamKey _key) const {
-    auto& param = findParameter(_key);
-    if (!param) {
-        return false;
-    }
-    return param.function >= 0;
-}
-
 bool DrawRule::contains(StyleParamKey _key) const {
     return findParameter(_key) != false;
 }
@@ -120,7 +112,7 @@ bool DrawRuleMergeSet::match(const Feature& _feature, const SceneLayer& _layer, 
     m_queuedLayers.clear();
 
     // If uber layer is marked not visible return immediately
-    if (!_layer.visible()) {
+    if (!_layer.enabled()) {
         return false;
     }
 
@@ -142,7 +134,7 @@ bool DrawRuleMergeSet::match(const Feature& _feature, const SceneLayer& _layer, 
         // Push each of the layer's matching sublayers onto the stack
         for (const auto& sublayer : layer.sublayers()) {
             // Skip matching this sublayer if marked not visible
-            if (!sublayer.visible()) {
+            if (!sublayer.enabled()) {
                 continue;
             }
 

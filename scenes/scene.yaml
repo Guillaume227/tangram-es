@@ -1,5 +1,6 @@
 global:
     feature_order: function () { return feature.sort_rank; }
+    sdk_mapzen_api_key: ''
 
 fonts:
     Montserrat:
@@ -92,7 +93,7 @@ sources:
         url: https://tile.mapzen.com/mapzen/vector/v1/all/{z}/{x}/{y}.mvt
         max_zoom: 16
         url_params:
-            api_key: vector-tiles-tyHL4AY
+            api_key: global.sdk_mapzen_api_key
 
 layers:
     touch:
@@ -563,6 +564,18 @@ layers:
                 width: 2px
                 color: wheat
 
+            text:
+                priority: 0
+                text_source:
+                    left: 'name:left'
+                    right: 'name:right'
+                font:
+                    family: Open Sans
+                    size: 12px
+                    fill: [0, 0, 0, .8]
+                    stroke: { color: white, width: 4 }
+                    transform: uppercase
+                    weight: bold
         country:
             filter: { kind: country }
             draw:

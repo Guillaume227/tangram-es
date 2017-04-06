@@ -36,6 +36,16 @@ typedef NS_ENUM(NSInteger, TGCameraType) {
     TGCameraTypeFlat,
 };
 
+/// Description of error status from Tangram
+typedef NS_ENUM(NSInteger, TGError) {
+    /// The path of the scene update was not found on the scene file
+    TGErrorSceneUpdatePathNotFound,
+    /// The YAML syntax of the scene udpate path has a syntax error
+    TGErrorSceneUpdatePathYAMLSyntaxError,
+    /// The YAML syntax of the scene update value has a syntax error
+    TGErrorSceneUpdateValueYAMLSyntaxError,
+};
+
 /// Debug flags to render additional information about various map components
 typedef NS_ENUM(NSInteger, TGDebugFlag) {
     /// While on, the set of tiles currently being drawn will not update to match the view
@@ -268,6 +278,17 @@ NS_ASSUME_NONNULL_END
  @param screenshot the image object representing the screenshot
  */
 - (void)mapView:(nonnull TGMapViewController *)view didCaptureScreenshot:(nonnull UIImage *)screenshot;
+
+/**
+ Called whenever scene updates have been applied to the scene file.
+ The list of scene update statuses will be emtpy if all updates have been applied successfully.
+ Called whenever scene updates have failed to apply to the scene file.
+
+ @param mapView a pointer to the map view
+ @param sceneUpdateError a NSError containing information about the scene update that failed
+ */
+- (void)mapView:(nonnull TGMapViewController *)mapView didFailSceneUpdateWithError:(NSError *)sceneUpdateError;
+
 @end
 
 NS_ASSUME_NONNULL_BEGIN
@@ -357,6 +378,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic) TGHttpHandler* httpHandler;
 
 /**
+ Assign the default resource root for this map view.
+ The resource root is the default directory where Tangram will try to load resources and scene
+ assets.
+
+ Must be non`-nil`.
+
+ @note By default the resource root is the main bundle resource URL.
+ */
+@property (strong, nonatomic) NSURL* resourceRoot;
+
+/**
  Adds a named data layer to the map. See `TGMapData` for more details.
 
  @param name the name of the data layer.
@@ -423,6 +455,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Loads a scene file (similar to `-loadSceneFile:`), with a list of
  updates to be applied to the scene.
+ If a scene update error happens, scene updates won't be applied.
 
  @param path the scene path URL
  @param sceneUpdates a list of `TGSceneUpdate` to apply to the scene
@@ -440,6 +473,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Loads a scene asynchronously (similar to `-loadSceneFileAsync:`), with a
  list of updates to be applied to the scene.
+ If a scene update error happens, scene updates won't be applied.
 
  @param path the scene path URL
  @param sceneUpdates a list of `TGSceneUpdate` to apply to the scene
@@ -470,6 +504,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Apply scene updates queued with `-queueSceneUpdate*` methods.
+ If a scene update error happens, scene udpates won't be applied.
  */
 - (void)applySceneUpdates;
 

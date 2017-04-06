@@ -56,6 +56,7 @@ void create(std::shared_ptr<Platform> p, std::string f, int w, int h) {
     sceneFile = f;
     width = w;
     height = h;
+    const std::string& apiKey = "vector-tiles-tyHL4AY";
 
     if (!glfwInit()) {
         assert(false);
@@ -65,7 +66,8 @@ void create(std::shared_ptr<Platform> p, std::string f, int w, int h) {
     // Setup tangram
     if (!map) {
         map = new Tangram::Map(platform);
-        map->loadSceneAsync(sceneFile.c_str(), true);
+        map->loadSceneAsync(sceneFile.c_str(), true, {}, nullptr,
+                {SceneUpdate("global.sdk_mapzen_api_key", apiKey)});
     }
 
     // Create a windowed mode window and its OpenGL context
@@ -384,6 +386,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
                 map->setPosition(8.82, 53.08);
                 map->setZoom(14);
                 break;
+            case GLFW_KEY_F3:
+                map->onMemoryWarning();
+                break;
         default:
                 break;
         }
@@ -408,7 +413,6 @@ void framebufferResizeCallback(GLFWwindow* window, int fWidth, int fHeight) {
     }
     map->setPixelScale(density);
     map->resize(fWidth, fHeight);
-
 }
 
 } // namespace GlfwApp
