@@ -32,7 +32,7 @@ static const size_t aaPrefixLen = 9;
 
 namespace Tangram {
 
-    void Tangram::logMsg(const char *fmt, ...) {
+    void logMsg(const char *fmt, ...) {
 
         va_list args;
         va_start(args, fmt);
@@ -45,7 +45,7 @@ namespace Tangram {
         // then resolving it will return the same URL. Otherwise, we resolve
         // it against the "asset" scheme to know later that this path is in
         // the asset bundle.
-        return Tangram::Url(path).resolved("asset:///").string();
+        return Url(path).resolved("asset:///").string();
     }
 
     void setCurrentThreadPriority(int priority) {
