@@ -31,11 +31,14 @@ target_include_directories(${LIB_NAME} PUBLIC
 target_include_directories(${LIB_NAME} PRIVATE 
 	${CMAKE_CURRENT_SOURCE_DIR}/../NAOMapLib/code/)
   
- 
-set_target_properties(djinni PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../utils/djinni/support-lib/jni)
+
+set_target_properties(djinni_support_lib 
+						PROPERTIES 
+						INTERFACE_INCLUDE_DIRECTORIES 
+						${CMAKE_CURRENT_SOURCE_DIR}/../utils/djinni/support-lib/jni)
 
 target_link_libraries(${LIB_NAME}
   PUBLIC
   ${CORE_LIBRARY}
-  # android libaries
-  GLESv2 djinni log z atomic android)
+  # android libraries
+  GLESv2 djinni_support_lib log z atomic android)
