@@ -33,7 +33,7 @@ void MarkerManager::setScene(std::shared_ptr<Scene> scene) {
         m_styleBuilders[style->getName()] = style->createBuilder();
     }
 
-    rebuildAll();
+    removeAll();
 }
 
 MarkerID MarkerManager::add() {
@@ -422,6 +422,9 @@ bool MarkerManager::buildGeometry(Marker& marker, int zoom) {
             return false;
         }
     }
+
+    // Apply defaul draw rules defined for this style
+    styler->style().applyDefaultDrawRules(*rule);
 
     m_styleContext->setKeywordZoom(zoom);
 
