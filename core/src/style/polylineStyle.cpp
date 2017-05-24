@@ -101,7 +101,7 @@ void PolylineStyle::onBeginDrawFrame(RenderState& rs, const View& _view, Scene& 
         m_texture->bind(rs, textureUnit);
 
         m_shaderProgram->setUniformi(rs, m_uTexture, textureUnit);
-        m_shaderProgram->setUniformf(rs, m_uTextureRatio, m_texture->getHeight() / m_texture->getWidth());
+        m_shaderProgram->setUniformf(rs, m_uTextureRatio, m_texture->getHeight()*1.f / m_texture->getWidth());
     }
 }
 

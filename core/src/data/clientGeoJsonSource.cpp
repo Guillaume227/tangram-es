@@ -47,9 +47,10 @@ std::shared_ptr<TileTask> ClientGeoJsonSource::createTask(TileID _tileId, int _s
 // TODO: pass scene's resourcePath to constructor to be used with `stringFromFile`
 ClientGeoJsonSource::ClientGeoJsonSource(std::shared_ptr<Platform> _platform,
                                          const std::string& _name, const std::string& _url,
-                                         int32_t _minDisplayZoom, int32_t _maxDisplayZoom, int32_t _maxZoom)
+                                         int32_t _minDisplayZoom, int32_t _maxDisplayZoom, int32_t _maxZoom,
+                                         int32_t _zoomBias)
 
-    : TileSource(_name, nullptr, _minDisplayZoom, _maxDisplayZoom, _maxZoom),
+    : TileSource(_name, nullptr, _minDisplayZoom, _maxDisplayZoom, _maxZoom, _zoomBias),
       m_platform(_platform) {
 
     // TODO: handle network url for client datasource data
@@ -223,7 +224,9 @@ struct add_geometry {
         feature.lines.emplace_back();
         Line& line = feature.lines.back();
         for (const auto& p : geom) {
-            line.push_back(transformPoint(p));
+            auto tp = transformPoint(p);
+            if (line.size() > 0 && tp == line.back()) { continue; }
+            line.push_back(tp);
         }
         return true;
     }
@@ -234,16 +237,32 @@ struct add_geometry {
             feature.polygons.back().emplace_back();
             Line& line = feature.polygons.back().back();
             for (const auto& p : ring) {
-                line.push_back(transformPoint(p));
+                auto tp = transformPoint(p);
+                if (line.size() > 0 && tp == line.back()) { continue; }
+                line.push_back(tp);
             }
         }
         return true;
     }
 
+    bool operator()(const geometry::multi_point<int16_t>& geom) {
+        for (auto& g : geom) { (*this)(g); }
+        return true;
+    }
+
+    bool operator()(const geometry::multi_line_string<int16_t>& geom) {
+        for (auto& g : geom) { (*this)(g); }
+        return true;
+    }
+
+    bool operator()(const geometry::multi_polygon<int16_t>& geom) {
+        for (auto& g : geom) { (*this)(g); }
+        return true;
+    }
+
     template <typename T>
     bool operator()(T) {
-        // Unreachable: All multi-geometries and feature collections
-        // are split up in vector tiles.
+        // Ignore GeometryCollection
         return false;
     }
 };
