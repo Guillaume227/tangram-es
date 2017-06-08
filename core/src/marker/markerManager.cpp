@@ -83,6 +83,7 @@ bool MarkerManager::setStylingFromString(MarkerID markerID, const char* styling)
 }
 
 bool MarkerManager::setStylingFromPath(MarkerID markerID, const char* path) {
+    auto lock = getMarkerLock();
     Marker* marker = getMarkerOrNull(markerID);
     if (!marker) { return false; }
 
