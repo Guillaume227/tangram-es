@@ -75,7 +75,16 @@ void Marker::setMesh(uint32_t styleId, uint32_t zoom, std::unique_ptr<StyledMesh
     } else {
         scale = extent();
     }
+    // preserve translation information - that's good
+    // for retaining its rough position while updating a marker geom
+    auto translation_x = m_modelMatrix[3][0];
+    auto translation_y = m_modelMatrix[3][1];
+
     m_modelMatrix = glm::scale(glm::vec3(scale));
+
+    // restore translation info
+    m_modelMatrix[3][0] = translation_x;
+    m_modelMatrix[3][1] = translation_y;
 }
 
 void Marker::setTexture(std::unique_ptr<Texture> texture) {
