@@ -430,7 +430,7 @@ void PolylineStyleBuilder<V>::buildLine(const Line& _line, const typename Parame
 
     float zoom = m_overzoom2;
     m_builder.addVertex = [&](const glm::vec3& coord, const glm::vec2& normal, const glm::vec2& uv) {
-        _mesh.vertices.push_back({{ coord.x,coord.y }, normal, { uv.x, uv.y * zoom },
+        _mesh.vertices.push_back({{ coord.x,coord.y }, normal, { uv.x, uv.y * zoom * 2},
                                   _att.width, _att.height, _att.color, selection});
     };
 
