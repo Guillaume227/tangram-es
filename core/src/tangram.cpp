@@ -55,7 +55,7 @@ public:
     void clearEase(EaseField _f);
 
     void setPositionNow(double _lon, double _lat);
-    void setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint);
+    void setMapPositionListener(std::weak_ptr<MapPositionListener> listener);
 
     void setZoomNow(float _z);
     void setRotationNow(float _radians);
@@ -562,14 +562,14 @@ void Map::setPosition(double _lon, double _lat) {
 
 }
 
-void Map::setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint)
+void Map::setMapPositionListener(std::weak_ptr<MapPositionListener> listener)
 {
-    impl->setMapPositionConstraint(constraint);
+    impl->setMapPositionListener(listener);
 }
 
-void Map::Impl::setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint)
+void Map::Impl::setMapPositionListener(std::weak_ptr<MapPositionListener> listener)
 {
-    view.setMapPositionConstraint(constraint);
+    view.setMapPositionListener(listener);
 }
 
 void Map::setPositionEased(double _lon, double _lat, float _duration, EaseType _e) {

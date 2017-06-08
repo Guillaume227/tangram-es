@@ -1,7 +1,7 @@
 #include "view/view.h"
 
 #include "log.h"
-#include "tangram.h" // for definition of MapPositionConstraint
+#include "tangram.h" // for definition of MapPositionListener
 #include "scene/stops.h"
 #include "util/rasterize.h"
 
@@ -166,23 +166,21 @@ float View::getMaxPitch() const {
 
 }
 
-void View::setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint)
+void View::setMapPositionListener(std::weak_ptr<MapPositionListener> constraint)
 {
-    m_posConstraint = constraint;
+    m_posListener = constraint;
 }
 
 
 void View::setPosition(double _x, double _y) {
 
-    auto posConstraint = m_posConstraint.lock();
-    if(posConstraint){
-        posConstraint->constrainPosition(_x, _y);
+    if(auto listener = m_posListener.lock()){
+        listener->onMapPositionChange(_x, _y);
     }
 
     m_pos.x = _x;
     m_pos.y = _y;
     m_dirtyTiles = true;
-
 }
 
 void View::setZoom(float _z) {

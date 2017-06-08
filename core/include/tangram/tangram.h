@@ -20,10 +20,10 @@ enum LabelType {
 };
 
 
-struct MapPositionConstraint
+struct MapPositionListener
 {
 	// (x, y) : units are meters, not (lon, lat) in degrees.
-    virtual void constrainPosition(double& x, double& y) = 0;
+    virtual void onMapPositionChange(double& x, double& y) = 0;
 };
 
 struct FeaturePickResult {
@@ -170,7 +170,7 @@ public:
     void setPosition(double _lon, double _lat);
     void setPositionEased(double _lon, double _lat, float _duration, EaseType _e = EaseType::quint);
 
-	void setMapPositionConstraint(std::weak_ptr<MapPositionConstraint> constraint = {});
+	void setMapPositionListener(std::weak_ptr<MapPositionListener> listener = {});
 
     // Set the values of the arguments to the position of the map view in degrees
     // longitude and latitude
