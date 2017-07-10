@@ -1,4 +1,4 @@
-add_definitions(-DPLATFORM_ANDROID)
+add_definitions(-DTANGRAM_ANDROID)
 
 # load core library
 add_subdirectory(${PROJECT_SOURCE_DIR}/core)
@@ -13,9 +13,8 @@ set(NAO_MAP_DIR ${NAO_ANDROID_DIR}naomap/)
 
 add_library(${LIB_NAME} SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/common/platform_gl.cpp
-  
   #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/jniExports.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/platform_android.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/androidPlatform.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/sqlite3ndk.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/tangram_platform_adapter.cpp
   

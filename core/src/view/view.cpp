@@ -1,7 +1,7 @@
 #include "view/view.h"
 
 #include "log.h"
-#include "tangram.h" // for definition of MapPositionListener
+#include "map.h" // for definition of MapPositionListener
 #include "scene/stops.h"
 #include "util/rasterize.h"
 

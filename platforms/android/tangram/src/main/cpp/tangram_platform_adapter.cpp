@@ -1,5 +1,5 @@
 #include <util/url.h>
-#include "tangram.h"
+#include "map.h"
 
 #include "tangram_platform_adapter.h"
 #include "PlatformTangramImpl.hpp"
