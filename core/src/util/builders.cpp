@@ -276,7 +276,7 @@ bool isOutsideTile(const glm::vec3& _a, const glm::vec3& _b) {
 }
 
 void buildPolyLineSegment(const Line& _line, PolyLineBuilder& _ctx, size_t _startIndex,
-                          size_t _endIndex, bool endCap = true) {
+                          size_t _endIndex, bool endCap = false) {
 
     float distance = 0; // Cumulative distance along the polyline.
 

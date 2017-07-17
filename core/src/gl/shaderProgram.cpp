@@ -1,3 +1,4 @@
+#include <fstream>
 #include "gl/shaderProgram.h"
 
 #include "gl/disposer.h"
@@ -76,6 +77,24 @@ bool ShaderProgram::build(RenderState& rs) {
 
     auto& vertSrc = m_vertexShaderSource;
     auto& fragSrc = m_fragmentShaderSource;
+
+    if(m_description.find("floor_raster") != std::string::npos)
+    {
+        {
+            std::ofstream ofs;
+            ofs.open(
+                    "/storage/emulated/0/Android/data/com.polestar.neologger/files/vertex_shader.txt");
+            ofs << m_vertexShaderSource;
+            ofs.close();
+        }
+        {
+            std::ofstream ofs;
+            ofs.open("/storage/emulated/0/Android/data/com.polestar.neologger/files/fragment_shader.txt");
+            ofs << m_fragmentShaderSource;
+            ofs.close();
+
+        }
+    }
 
     // Compile vertex and fragment shaders
     GLint vertexShader = makeCompiledShader(rs, vertSrc, GL_VERTEX_SHADER);

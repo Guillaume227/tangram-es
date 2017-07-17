@@ -16,6 +16,7 @@ class Marker;
 class Scene;
 class StyleBuilder;
 class StyleContext;
+class View;
 
 class MarkerManager {
 
@@ -33,10 +34,14 @@ public:
     bool remove(MarkerID markerID);
 
     // Set the styling for a marker using a YAML string; returns true if the marker was found and updated.
-    bool setStylingFromString(MarkerID markerID, const char* styling);
+    bool setStylingFromString(MarkerID markerID, const char* styling) {
+        return setStyling(markerID, styling, false);
+    }
 
     // Set the styling for a marker using a scene path; returns true is the marker was found and update.
-    bool setStylingFromPath(MarkerID markerID, const char* path);
+    bool setStylingFromPath(MarkerID markerID, const char* path) {
+        return setStyling(markerID, path, true);
+    }
 
     bool setBitmap(MarkerID markerID, int width, int height, const unsigned int* bitmapData);
 
@@ -60,9 +65,10 @@ public:
     // Set a marker to a polygon feature at the given position; returns true if the marker was found and updated.
     bool setPolygon(MarkerID markerID, LngLat* coordinates, int* counts, int rings);
 
-    // Update the zoom level for all markers; markers are built for one zoom level at a time so when the current zoom
-    // changes, all marker meshes are rebuilt.
-    bool update(int zoom);
+    // Update the zoom level for all markers; markers are built for one zoom
+    // level at a time so when the current zoom changes, all marker meshes are
+    // rebuilt. Returns true when any Markers changed since last call to update.
+    bool update(const View& _view, float _dt);
 
     // Remove and destroy all markers.
     void removeAll();
@@ -84,8 +90,9 @@ private:
 
     Marker* getMarkerOrNull(MarkerID markerID);
 
+    bool setStyling(MarkerID markerID, const char* styling, bool isPath);
     bool buildStyling(Marker& marker);
-    bool buildGeometry(Marker& marker, int zoom);
+    bool buildMesh(Marker& marker, int zoom);
 
     std::unique_ptr<StyleContext> m_styleContext;
     std::shared_ptr<Scene> m_scene;
@@ -96,6 +103,7 @@ private:
 
     uint32_t m_idCounter = 0;
     int m_zoom = 0;
+    bool m_dirty = false;
 
 };
 

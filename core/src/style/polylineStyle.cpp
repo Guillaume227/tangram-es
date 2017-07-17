@@ -138,6 +138,7 @@ void PolylineStyle::constructShaderProgram() {
             m_shaderSource->addSourceBlock("defines", "#define TANGRAM_DASHLINE_TEX_SCALE " +
                                             ff::to_string(dash_scale) + "\n", false);
         } else {
+
             m_shaderSource->addSourceBlock("defines", "#define TANGRAM_DASHLINE_TEX_SCALE 1.0\n", false);
         }
     }
@@ -375,6 +376,7 @@ bool PolylineStyleBuilder<V>::evalWidth(const StyleParam& _styleParam, float& wi
         return true;
     }
 
+
     if (_styleParam.value.is<StyleParam::Width>()) {
         auto& widthParam = _styleParam.value.get<StyleParam::Width>();
 
@@ -383,6 +385,8 @@ bool PolylineStyleBuilder<V>::evalWidth(const StyleParam& _styleParam, float& wi
         if (widthParam.isMeter()) {
             width *= meterWidthScale;
             slope = width * 2;
+            if(widthParam.value > 10)
+                LOGD("wIn %f; width %f; zoom %f; tileUnitsPerPixel %f; tileUnitsPerMeter %f; overzoom2 %f;", widthParam.value, width, m_zoom, m_tileUnitsPerPixel, m_tileUnitsPerMeter, m_overzoom2);
         } else {
             width *= pixelWidthScale;
             slope = width;

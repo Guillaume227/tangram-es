@@ -24,6 +24,7 @@ struct MapPositionListener
 {
 	// (x, y) : units are meters, not (lon, lat) in degrees.
     virtual void onMapPositionChange(double& x, double& y) = 0;
+    //virtual void onMapZoomChange(double zoom) = 0;
 };
 
 struct FeaturePickResult {

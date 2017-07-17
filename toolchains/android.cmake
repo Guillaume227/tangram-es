@@ -15,8 +15,8 @@ add_library(${LIB_NAME} SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/common/platform_gl.cpp
   #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/jniExports.cpp
   #${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/androidPlatform.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/sqlite3ndk.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/tangram_platform_adapter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/tangram/src/main/cpp/sqlite3ndk.cpp
   
   ${NAO_MAP_DIR}src/main/jni/NativePlatformTangramImpl.cpp
   ${NAO_MAP_DIR}src/main/jni/NativeIUrlCallback.cpp

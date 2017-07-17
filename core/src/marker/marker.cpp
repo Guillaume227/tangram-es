@@ -87,6 +87,10 @@ void Marker::setMesh(uint32_t styleId, uint32_t zoom, std::unique_ptr<StyledMesh
     m_modelMatrix[3][1] = translation_y;
 }
 
+void Marker::clearMesh() {
+    m_mesh.reset();
+}
+
 void Marker::setTexture(std::unique_ptr<Texture> texture) {
     m_texture = std::move(texture);
 }

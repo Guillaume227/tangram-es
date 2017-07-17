@@ -53,7 +53,6 @@ namespace Tangram {
         setpriority(PRIO_PROCESS, tid, priority);
     }
 
-
     void initGLExtensions() {
 
         static bool glExtensionsLoaded = false;
@@ -74,17 +73,17 @@ namespace Tangram {
         glExtensionsLoaded = true;
     }
 
-    std::shared_ptr<Platform>
-    Platform::wrapPlatform(const std::shared_ptr<PlatformTangramImpl> &tangramPlatform) {
-        return std::make_shared<TangramPlatformAdapter>(tangramPlatform);
-    }
-
 }
+
+std::shared_ptr<Tangram::Platform>
+Tangram::Platform::wrapPlatform(const std::shared_ptr<PlatformTangramImpl> &tangramPlatform) {
+    return std::make_shared<TangramPlatformAdapter>(tangramPlatform);
+}
+
 TangramPlatformAdapter::TangramPlatformAdapter(std::shared_ptr<PlatformTangramImpl> const& tangramPlatform)
 : platformImpl_(tangramPlatform){}
 
-void TangramPlatformAdapter::requestRender() const
-{
+void TangramPlatformAdapter::requestRender() const {
 	platformImpl_->requestRender();
 }
 
@@ -109,7 +108,6 @@ void TangramPlatformAdapter::setContinuousRendering(bool _isContinuous) {
 	
 	platformImpl_->setContinuousRendering(_isContinuous);	
 }
-
 
 std::vector<char> TangramPlatformAdapter::systemFont(const std::string& _name, const std::string& _weight, const std::string& _face) const 
 {
